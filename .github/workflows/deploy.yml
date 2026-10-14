@@ -1,99 +1,39 @@
-name: 🚀 Build and Deploy Website
+name: Deploy Website
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
-  # JOB 3: DEPLOY — Publish to GitHub Pages
-  # ══════════════════════════════════════════════
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: github-pages
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📁 Prepare site files
-        run: |
-          mkdir -p _site
-          cp -r src/* _site/
-          echo "Site ready for deployment"
-
-      - name: 🔧 Configure GitHub Pages
-      uses: actions/configure-pages@v5
-
-      - name: 📤 Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - name: 🌐 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-  deploy:
-    name: 🚀 Deploy
-    runs-on: ubuntu-latest
   contents: read
   pages: write
-          path: dist/
-          retention-days: 7
-
-  # ══════════════════════════════════════════════
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-          echo "Build Date: $(date -u)" > dist/build-info.txt
-        with:
-          name: website-build
-
-      - name: 📤 Upload build artifact
-        uses: actions/upload-artifact@v4
-          echo "Commit SHA: ${{ github.sha }}" >> dist/build-info.txt
-          echo "Branch: ${{ github.ref_name }}" >> dist/build-info.txt
-          echo "Triggered by: ${{ github.actor }}" >> dist/build-info.txt
-  # ══════════════════════════════════════════════
-  # JOB 1: TEST — Validate the website
-        run: |
-      - name: 📝 Add build info file
-  # ══════════════════════════════════════════════
-          echo "Build complete!"
-
-  test:
-    name: 🧪 Test
-          cp -r src/* dist/
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - name: 📥 Checkout code
-          mkdir -p dist
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-        run: |
-      - name: ✅ Verify required files exist
-        run: |
-          echo "Checking for required files..."
-          test -f src/index.html || (echo "❌ src/index.html missing" && exit 1)
-          test -f src/style.css  || (echo "❌ src/style.css missing" && exit 1)
-          test -f src/script.js  || (echo "❌ src/script.js missing" && exit 1)
-          echo "✅ All required files present!"
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
+      - name: Upload website files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./src
 
-  # ══════════════════════════════════════════════
-  # JOB 2: BUILD — Package the site
-  # ══════════════════════════════════════════════
-  build:
-
-      - name: 📁 Create build directory
-    name: 🏗️ Build
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-    runs-on: ubuntu-latest
-    needs: test
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
